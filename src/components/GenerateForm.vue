@@ -27,10 +27,9 @@
 </template>
 
 <script>
-import { generate } from '@vue/compiler-core';
 import VueDatePicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css';
-import moment from 'moment';
+import moment from 'moment-timezone';
 import random from 'random';
 
 export default {
@@ -50,15 +49,15 @@ export default {
     methods: {
         startProcess() {
             const genResults = [];
-            const startDate = moment(this.startDate);
-            const endDate = moment(this.endDate);
+            const startDate = moment.tz(this.startDate);
+            const endDate = moment.tz(this.endDate);
             const dateDiff = endDate.diff(startDate, 'days');
 
-            const startHour = moment(this.timeRangeStart).hour();
-            const endHour = moment(this.timeRangeEnd).hour();
+            const startHour = moment.tz(this.timeRangeStart).hour();
+            const endHour = moment.tz(this.timeRangeEnd).hour();
 
-            const startMinute = moment(this.timeRangeStart).minute();
-            const endMinute = moment(this.timeRangeEnd).minute();
+            const startMinute = moment.tz(this.timeRangeStart).minute();
+            const endMinute = moment.tz(this.timeRangeEnd).minute();
 
             //Setup the minute before doing anything
             startDate.minute(startMinute);
@@ -71,15 +70,18 @@ export default {
                 endHour,
             };
 
-            //Add the start date in date list (All of them will be moment.js object).
+            //Add the start date in date list.
             const dateList = [];
             dateList.push(startDate);
 
             //Get the all of the date (exclude first and last date) in range first.
-            for (let i = 1; i <= dateDiff; i++) {
-                startDate.add(1, 'd');
-                dateList.push(startDate);
+            for (let i = 1; i < dateDiff; i++) {
+                const newDate = startDate.clone();
+                newDate.add(1, 'd');
+                dateList.push(newDate);
             }
+            dateList.push(endDate);
+            
             for (let i = 0; i < dateList.length; i++) {
                 const date = dateList[i];
                 const randomTime = this.generateRandomTime(date, targetDateTime);
@@ -99,7 +101,7 @@ export default {
             this.resultText = resultText;
         },
         generateRandomTime(date, targetDateTime) {
-            const newDate = date;
+            const newDate = date.clone();
             const newHour = this.randomHour(targetDateTime.startHour, targetDateTime.endHour);
             const newMinute = this.randomMinute();
             newDate.hour(newHour);
