@@ -1,5 +1,11 @@
 <template>
     <div class="input-form">
+        <div class="form-group timezone">
+            <label for="start-date" class="form-label">Timezone</label>
+            <select class="form-select" aria-label="Select timezone" v-model="targetTimeZone">
+                <option v-for="timezone in timezones" :value="timezone"> {{ timezone }}</option>
+            </select>
+        </div>
         <div class="form-group start-date">
             <label for="start-date" class="form-label">Start Date</label>
             <VueDatePicker format="yyyy/MM/dd" type="date" id="start-date" v-model="startDate" />
@@ -44,20 +50,22 @@ export default {
             timeRangeStart: '',
             timeRangeEnd: '',
             resultText: '',
+            timezones: moment.tz.names(),
+            targetTimeZone: moment.tz.guess(),
         }
     },
     methods: {
         startProcess() {
             const genResults = [];
-            const startDate = moment.tz(this.startDate);
-            const endDate = moment.tz(this.endDate);
+            const startDate = moment.tz(this.startDate, this.targetTimeZone);
+            const endDate = moment.tz(this.endDate, this.targetTimeZone);
             const dateDiff = endDate.diff(startDate, 'days');
 
-            const startHour = moment.tz(this.timeRangeStart).hour();
-            const endHour = moment.tz(this.timeRangeEnd).hour();
+            const startHour = moment.tz(this.timeRangeStart, this.targetTimeZone).hour();
+            const endHour = moment.tz(this.timeRangeEnd, this.targetTimeZone).hour();
 
-            const startMinute = moment.tz(this.timeRangeStart).minute();
-            const endMinute = moment.tz(this.timeRangeEnd).minute();
+            const startMinute = moment.tz(this.timeRangeStart, this.targetTimeZone).minute();
+            const endMinute = moment.tz(this.timeRangeEnd, this.targetTimeZone).minute();
 
             //Setup the minute before doing anything
             startDate.minute(startMinute);
@@ -77,24 +85,23 @@ export default {
             //Get the all of the date (exclude first and last date) in range first.
             for (let i = 1; i < dateDiff; i++) {
                 const newDate = startDate.clone();
-                newDate.add(1, 'd');
+                newDate.add(i, 'd');
                 dateList.push(newDate);
             }
             dateList.push(endDate);
-            
             for (let i = 0; i < dateList.length; i++) {
-                const date = dateList[i];
+                const date = dateList[i].clone();
                 const randomTime = this.generateRandomTime(date, targetDateTime);
                 const newDateTime = {
-                    date: randomTime.format('YYYY-MM-DD hh:mm:ss'),
+                    date: randomTime.format('YYYY-MM-DD HH:mm:ss'),
                     timestamp: randomTime.unix(),
                 };
                 genResults.push(newDateTime);
             }
-            genResults.sort(function(a, b){return a - b});
+            genResults.sort(function (a, b) { return a - b });
 
             let resultText = '';
-            for(let i = 0; i < genResults.length; i++){
+            for (let i = 0; i < genResults.length; i++) {
                 const result = genResults[i];
                 resultText = `${resultText} \n ${result['timestamp']} (${result['date']})`;
             }
@@ -102,14 +109,17 @@ export default {
         },
         generateRandomTime(date, targetDateTime) {
             const newDate = date.clone();
-            const newHour = this.randomHour(targetDateTime.startHour, targetDateTime.endHour);
-            const newMinute = this.randomMinute();
+            let newHour = this.randomHour(targetDateTime.startHour, targetDateTime.endHour);
+            let newMinute = this.randomMinute();
             newDate.hour(newHour);
             newDate.minute(newMinute);
+
             //If the timestamp over the time range, regen it
-            if (newDate.unix() < targetDateTime.startDate.unix() || newDate.unix() > targetDateTime.end) {
-                this.generateRandomTime(date, targetDateTime);
-                return;
+            while(newDate.unix() < targetDateTime.startDate.unix() || newDate.unix() > targetDateTime.endDate){
+                newHour = this.randomHour(targetDateTime.startHour, targetDateTime.endHour);
+                newMinute = this.randomMinute();
+                newDate.hour(newHour);
+                newDate.minute(newMinute);
             }
             //Return updated date
             return newDate;
@@ -119,7 +129,7 @@ export default {
             return hour;
         },
         randomMinute() {
-            const minute = random.int(0, 60);
+            const minute = random.int(0, 59);
             return minute;
         },
     },
@@ -139,7 +149,7 @@ export default {
     text-align: center;
 }
 
-.generate-result{
+.generate-result {
     margin-top: 30px;
     margin-bottom: 30px;
 }

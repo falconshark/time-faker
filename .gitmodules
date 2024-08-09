@@ -1,3 +1,0 @@
-[submodule "timezones.json"]
-	path = timezones.json
-	url = git@github.com:dmfilipenko/timezones.json.git
