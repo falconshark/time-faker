@@ -1,5 +1,13 @@
 <template>
     <div class="input-form">
+        <ul class="nav nav-tabs" ref="mode-switcher">
+            <li class="nav-item" id="randomMode">
+                <a :class="[mode === 'random' ? 'nav-link active' : 'nav-link']" @click="switchMode('randomMode')" href="#">Random</a>
+            </li>
+            <li class="nav-item" id="fixedMode">
+                <a :class="[mode === 'fixed' ? 'nav-link active' : 'nav-link']" href="#" @click="switchMode('fixedMode')">Fixed</a>
+            </li>
+        </ul>
         <div class="form-group timezone">
             <label for="start-date" class="form-label">Timezone</label>
             <select class="form-select" aria-label="Select timezone" v-model="targetTimeZone">
@@ -45,6 +53,7 @@ export default {
     },
     data() {
         return {
+            mode: 'random',
             startDate: '',
             endDate: '',
             timeRangeStart: '',
@@ -55,6 +64,20 @@ export default {
         }
     },
     methods: {
+        switchMode(mode) {
+            switch (mode) {
+                case 'fixedMode':
+                    this.mode = 'fixed';
+                    break;
+
+                case 'randomMode':
+                    this.mode = 'random';
+                    break;
+
+                default:
+                    break;
+            }
+        },
         startProcess() {
             const genResults = [];
             const startDate = moment.tz(this.startDate, this.targetTimeZone);
@@ -115,7 +138,7 @@ export default {
             newDate.minute(newMinute);
 
             //If the timestamp over the time range, regen it
-            while(newDate.unix() < targetDateTime.startDate.unix() || newDate.unix() > targetDateTime.endDate){
+            while (newDate.unix() < targetDateTime.startDate.unix() || newDate.unix() > targetDateTime.endDate) {
                 newHour = this.randomHour(targetDateTime.startHour, targetDateTime.endHour);
                 newMinute = this.randomMinute();
                 newDate.hour(newHour);
@@ -137,6 +160,10 @@ export default {
 </script>
 
 <style lang="scss">
+.nav-tabs {
+    margin-bottom: 30px;
+}
+
 .form-group {
     margin-bottom: 10px;
 }

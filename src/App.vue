@@ -7,7 +7,7 @@
           Timefaker
         </div>
         <div class="description">
-          A tool for generate random timestamp with specified time range.
+          A tool for generate random / fixed timestamp with specified time range.
         </div>
         <div class="description-2">
           (Example: Generate the timestamp between 2024/08/06 - 2024/08/07, every 10:00 - 18:00.)
