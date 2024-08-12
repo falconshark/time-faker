@@ -10,7 +10,9 @@
                     @click="switchMode('fixedMode')">Fixed</a>
             </li>
         </ul>
-
+        <div class="alert alert-danger" role="alert" v-if="errorMessage !== ''">
+            {{ errorMessage }}
+        </div>
         <div class="form-group timezone">
             <label for="start-date" class="form-label">Timezone</label>
             <select class="form-select" aria-label="Select timezone" v-model="targetTimeZone">
@@ -39,17 +41,18 @@
         </div>
 
         <div class="generate-button-wrapper">
-            <button v-if="mode == 'fixed'" class="btn btn-primary generate-button" @click="startFixedMode">Generate
-                !</button>
+            <button v-if="mode == 'fixed'" class="btn btn-primary generate-button" @click="startFixedMode">
+                Generate!
+            </button>
         </div>
         <div class="generate-button-wrapper">
-            <button v-if="mode == 'random'" class="btn btn-primary generate-button" @click="startRandomMode">Generate
-                !</button>
+            <button v-if="mode == 'random'" class="btn btn-primary generate-button" @click="startRandomMode">
+                Generate!
+            </button>
         </div>
 
         <div class="generate-result">
-            <textarea class="form-control" id="result" rows="10" v-model="resultText">
-            </textarea>
+            <textarea class="form-control" id="result" rows="10" v-model="resultText"></textarea>
         </div>
     </div>
 </template>
@@ -75,6 +78,7 @@ export default {
             resultText: '',
             timezones: moment.tz.names(),
             targetTimeZone: moment.tz.guess(),
+            errorMessage: '',
         }
     },
     methods: {
@@ -93,6 +97,10 @@ export default {
             }
         },
         startRandomMode() {
+            //If can not pass vaildate, don't do it
+            if (!this.vaildateInput()) {
+                return;
+            }
             const genResults = [];
             const startDate = moment.tz(this.startDate, this.targetTimeZone);
             const endDate = moment.tz(this.endDate, this.targetTimeZone);
@@ -145,6 +153,10 @@ export default {
             this.resultText = resultText;
         },
         startFixedMode() {
+            //If can not pass vaildate, don't do it
+            if (!this.vaildateInput()) {
+                return;
+            }
             const genResults = [];
             const startDate = moment.tz(this.startDate, this.targetTimeZone);
             const endDate = moment.tz(this.endDate, this.targetTimeZone);
@@ -167,10 +179,10 @@ export default {
             for (let i = 0; i < dateList.length; i++) {
                 const dateStart = dateList[i].clone();
                 const dateEnd = dateList[i].clone();
-                
+
                 dateStart.hour(startHour);
                 dateStart.minute(startMinute);
-                
+
                 dateEnd.hour(endHour);
                 dateEnd.minute(endMinute);
 
@@ -218,6 +230,43 @@ export default {
         randomMinute() {
             const minute = random.int(0, 59);
             return minute;
+        },
+        vaildateInput() {
+            //Check if field input is blank
+            if (this.startDate === '' || this.endDate === '' || this.timeRangeStart === '' || this.timeRangeEnd === '') {
+                this.errorMessage = 'Please input all of field.';
+                return false;
+            }
+            const startDate = moment.tz(this.startDate, this.targetTimeZone);
+            const endDate = moment.tz(this.endDate, this.targetTimeZone);
+
+            const startHour = moment.tz(this.timeRangeStart, this.targetTimeZone).hour();
+            const endHour = moment.tz(this.timeRangeEnd, this.targetTimeZone).hour();
+
+            const startMinute = moment.tz(this.timeRangeStart, this.targetTimeZone).minute();
+            const endMinute = moment.tz(this.timeRangeEnd, this.targetTimeZone).minute();
+
+            //A date for testing the time range is vaild.
+            const testDateStart = moment();
+            testDateStart.hour(startHour);
+            testDateStart.minute(startMinute);
+            
+            const testDateEnd = moment();
+            testDateEnd.hour(endHour);
+            testDateEnd.minute(endMinute);
+
+            //Check if start hour is smaller than end hour, or start date is smaller than end date
+            if(startDate.unix() > endDate.unix()){
+                this.errorMessage = 'The end date should not earlier then start date.';
+                return false;
+            }
+
+            if(testDateStart.unix() > testDateEnd.unix()){
+                this.errorMessage = 'The end time should not earlier then start time.';
+                return false;
+            }
+
+            return true;
         },
     },
 }
